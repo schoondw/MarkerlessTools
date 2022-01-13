@@ -1,0 +1,26 @@
+% Matlab script for conversion of Theia data to text-based format
+% 
+
+%% Read list of folders (from Excel file) containing the C3D files exported from Theia (TheiaFormatData)
+
+dir_list = {'dir_1', 'dir_2',..., 'dir_n'};
+n_dir = length(dir_list);
+
+%% Loop for conversion of c3d files to json
+
+for i=1:n_dir
+    current_dir = dir_list{i};
+    cd(current_dir)
+    
+    % Read list of pose files in the current directory to be converted 
+    % Number of files dependent on the number of skeletons exported by Theia
+    file_list = {'pose_filt_0.c3d', 'pose_filt_1.c3d', ..., 'pose_filt_m.c3d'};  
+    
+    ---- Libor: can you help fill in the below steps for the conversion with Visual3D? ----
+    
+    # Open Visual3D and run V3D script to convert the files specified in the file list to JSON
+    # - If required, a specific V3D script can be generated from Matlab with the correct path, number of files and file names using fprintf function with variables.
+    # - Run Visual3D from Matlab with DOS command with arguments.
+    # - JSON output should be written to current_dir, files: pose_filt_0.json, pose_filt_1.json, etc.
+    
+end

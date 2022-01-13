@@ -1,0 +1,38 @@
+ffprobe commands:
+
+Number of frames (source: https://stackoverflow.com/questions/2017843/fetch-frame-count-with-ffmpeg):
+ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 "input.avi"
+
+Duration (extracted from: https://superuser.com/questions/1568405/windows-batch-recurse-directories-for-media-file-durations-using-ffmpeg):
+ffprobe -i "input.avi" -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal
+
+Video resolution (source: https://superuser.com/questions/841235/how-do-i-use-ffmpeg-to-get-the-video-resolution)
+ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 input.mp4
+
+
+Option strings
+-v quiet -select_streams v:0 -show_entries stream =width,height,nb_frames
+
+
+Test:
+ffprobe -i "C:\Users\q\Documents\QTM Projects\2021-10-13 Markerless test\Data\EST_T1\2021-10-14_Markerless\Dynamic 2_Miqus_1_21548.avi" -v quiet -select_streams v:0 -count_packets -show_entries stream=nb_read_packets  -show_entries format=duration -of csv="p=0" -sexagesimal
+ffprobe -i "C:\Users\q\Documents\QTM Projects\2021-10-13 Markerless test\Data\EST_T1\2021-10-14_Markerless\Dynamic 2_Miqus_1_21548.avi" -v quiet -select_streams v:0 -count_packets -show_entries stream=nb_read_packets  -show_entries format=duration -of csv="p=0"
+
+Returns width, height and number of frames in comma separated list
+ffprobe -i "Test.avi" -v quiet -select_streams v:0 -show_entries stream=width,height,nb_frames -of csv=p=0
+
+Iteration of same:
+for /R %i in (*Miqus*.avi) do (echo "%~fi" >>"test.txt" & ffprobe -i "%~fi"  -v quiet -select_streams v:0 -show_entries stream=width,height,nb_frames -of csv=p=0 >>"test.txt")
+
+
+Batch duration info (source: https://superuser.com/questions/1568405/windows-batch-recurse-directories-for-media-file-durations-using-ffmpeg)
+
+for /R %i in (*Miqus*.avi) do (ffprobe -i "%~fi" -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal)>>test.txt
+
+for /R %i in (*Miqus*.avi) do (echo "%~fi" >>"test.txt" & ffprobe -i "%~fi" -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal >>"test.txt")
+
+
+
+
+Does not work:
+for /R %f in (*Miqus*.avi) do (for /f %e in ('ffprobe -i "%~ff" -show_entries format=duration -v quiet -of csv="p=0" -sexagesimal') do (echo "%~ff %~e" >>videoinfo.txt))
