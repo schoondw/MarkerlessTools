@@ -18,6 +18,7 @@ admin_file = 'admin.xlsx';
 trial_sheet = 'trials';
 max_rows = 1000;
 
+verbose = true;
 
 %% Extract subject list
 D = dir('./Data');
@@ -35,7 +36,8 @@ trialVarDef = {...
     'session_folder','string';...
     'data_folder','string';...
     'trial','string';...
-    'n_skel','double'...
+    'n_skel','double';...
+    'processing_date','string'...
     };
 n_vars=size(trialVarDef,1);
 
@@ -93,6 +95,10 @@ for i_subj = 1:n_subjects
                 trial_tab{row_counter,'data_folder'} = string(current_datafolder);
                 trial_tab{row_counter,'trial'} = string(current_trial);
                 trial_tab{row_counter,'n_skel'} = n_skel;
+                
+                if n_skel > 0
+                    trial_tab{row_counter,'processing_date'} = string(D(1).date);
+                end
             end
             
         end
@@ -105,3 +111,6 @@ end
 writetable(trial_tab(1:row_counter,:),admin_file,...
     'Sheet',trial_sheet,'WriteMode','overwritesheet');
 
+if verbose
+    disp('Done!')
+end
