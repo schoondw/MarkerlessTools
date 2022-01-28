@@ -7,8 +7,6 @@
 % - Save QTM mat containing all skeletons to subfolder QTM_format
 
 %% Parameters
-admin_only = false;
-
 admin_file = 'admin.xlsx';
 trial_sheet = 'trials';
 skel_sheet = 'skeletons';
@@ -28,6 +26,7 @@ animation_model_segments = {'abdomen','thorax','neck'};
 
 qtm_format_folder = 'qtm_format';
 
+admin_only = false; % Only adds info to admin/skip writing mat file when true
 verbose = true;
 
 %% Read admin
