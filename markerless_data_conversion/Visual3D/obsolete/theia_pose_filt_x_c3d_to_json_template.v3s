@@ -1,6 +1,7 @@
 Set_Pipeline_Parameter_To_List_Of_Files
 /PARAMETER_NAME=filenames
-/FOLDER=E:\Qualisys_repository\PAF-Baseball2\Data\Jim Doe\Baseball Markerless Right-handed\TheiaFormatData
+! /FOLDER=E:\Qualisys_repository\PAF-Baseball2\Data\Jim Doe\Baseball Markerless Right-handed\TheiaFormatData
+/FOLDER=%s
 /SEARCH_SUBFOLDERS=TRUE
 /FILE_MASK=pose_filt_*.c3d
 ! /ALPHABETIZE=TRUE
@@ -41,13 +42,13 @@ Set_Pipeline_Parameter
 ;
 
 Export_Data_To_Ascii_File
-/SIGNAL_TYPES=ROTATION
+/SIGNAL_TYPES=FRAME_NUMBERS+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION+ROTATION
 ! /SIGNAL_FOLDER=ORIGINAL
-/SIGNAL_NAMES=head_4X4+l_foot_4X4+l_hand_4X4+l_larm_4X4+l_shank_4X4+l_thigh_4X4+l_toes_4X4+l_uarm_4X4+pelvis_4X4+pelvis_shifted_4X4+r_foot_4X4+r_hand_4X4+r_larm_4X4+r_shank_4X4+r_thigh_4X4+r_toes_4X4+r_uarm_4X4+torso_4X4+vlb_4x4+worldbody_4X4+l_clavicle_4x4+r_clavicle_4x4
+/SIGNAL_NAMES=TIME+pelvis_4X4+l_thigh_4X4+l_shank_4X4+l_foot_4X4+l_toes_4X4+r_thigh_4X4+r_shank_4X4+r_foot_4X4+r_toes_4X4+torso_4X4+l_clavicle_4X4+l_uarm_4X4+l_larm_4X4+l_hand_4X4+r_clavicle_4X4+r_uarm_4X4+r_larm_4X4+r_hand_4X4+head_4X4+pelvis_shifted_4X4
 /FILE_NAME=&::filename_short
 ! /SIGNAL_COMPONENTS=
 /COMPONENT_SEQUENCE=ALL
-! /SIGNAL_PRECISION=
+/SIGNAL_PRECISION=6
 ! /EVENT_SEQUENCE=
 ! /EXCLUDE_EVENTS=
 ! /USE_POINT_RATE=FALSE
@@ -62,7 +63,7 @@ Export_Data_To_Ascii_File
 ! /INCLUDE_TAGS_FOR_XML=FALSE
 ! /EXPORT_EMPTY_SIGNALS=FALSE
 ! /EXPORT_WITHOUT_HEADER=FALSE
-! /EXPORT_NAN=FALSE
+/EXPORT_NAN=TRUE
 ! /USE_SCIENTIFIC_NOTATION=FALSE
 ;
 
@@ -70,3 +71,5 @@ End_For_Each
 /ITERATION_PARAMETER_NAME=filename
 ;
 
+Exit_Workspace
+;

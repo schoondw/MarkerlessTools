@@ -10,7 +10,12 @@
 
 %% Parameters
 v3d_program = 'C:\Program Files\Visual3D x64\Visual3D.exe';
-v3s_template = 'C:\Users\labbuser\Documents\EST\Matlab stuff\EnTimeMent\markerless_data_conversion\Visual3D\theia_pose_filt_x_c3d_to_mat_template.v3s';
+% v3s_template = 'C:\Users\labbuser\Documents\EST\Matlab stuff\EnTimeMent\markerless_data_conversion\Visual3D\theia_pose_filt_x_c3d_to_mat_template.v3s';
+v3s_template_path = 'C:\Users\labbuser\Documents\EST\Matlab stuff\EnTimeMent\markerless_data_conversion\Visual3D\';
+v3s_template = 'theia_pose_filt_x_c3d_to_mat_template.v3s';
+v3s_template_spec = fullfile(v3s_template_path, v3s_template);
+
+v3s_instance_name = 'theia_pose_filt_x_c3d_to_mat.v3s'; % Name of v3s pipeline copied to target folder
 
 admin_file = 'admin.xlsx';
 trial_sheet = 'trials';
@@ -42,7 +47,7 @@ for i1 = 1:n_rows
     end
     
     % Open template
-    fid_templ = fopen(v3s_template,'r');
+    fid_templ = fopen(v3s_template_spec,'r');
     f_templ = fread(fid_templ);
     fclose(fid_templ);
     
@@ -50,7 +55,7 @@ for i1 = 1:n_rows
     f_pln = strrep(f_templ,'%s',fn);
     
     % Write v3s pipeline to trial folder
-    v3s_pipeline = fullfile(fn,'theia_pose_filt_x_to_mat.v3s');
+    v3s_pipeline = fullfile(fn, v3s_instance_name);
     
     fid_out = fopen(v3s_pipeline,'w');
     fprintf(fid_out,'%s',f_pln);

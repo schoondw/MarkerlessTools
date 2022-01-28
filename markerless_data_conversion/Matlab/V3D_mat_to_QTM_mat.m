@@ -7,6 +7,8 @@
 % - Save QTM mat containing all skeletons to subfolder QTM_format
 
 %% Parameters
+admin_only = false;
+
 admin_file = 'admin.xlsx';
 trial_sheet = 'trials';
 skel_sheet = 'skeletons';
@@ -20,6 +22,10 @@ flds_required = {'FRAME_RATE','TIME'};
 % Expected Visual3D non-segment data (not critical for correct functioning)
 flds_fixed = {'FILE_NAME','FRAME_RATE','ANALOG_VIDEO_FRAME_RATIO','TIME','THEIA3D_VERSION'};
 
+default_model = 'standard';
+animation_model = 'animation';
+animation_model_segments = {'abdomen','thorax','neck'};
+
 qtm_format_folder = 'qtm_format';
 
 verbose = true;
@@ -27,6 +33,11 @@ verbose = true;
 %% Read admin
 trial_tab = readtable(admin_file,'Sheet',trial_sheet);
 n_trials = height(trial_tab);
+
+string_vars = {'theia_version'};
+if sum(ismember(trial_tab.Properties.VariableNames,string_vars))>0
+    trial_tab = convertvars(trial_tab,string_vars,'string');
+end
 
 project_path = pwd;
 
@@ -46,10 +57,12 @@ skelVarDef = {...
     'session_folder','string';...
     'data_folder','string';...
     'trial','string';...
+    'processing_date','string';...
+    'theia_version','string';...
+    'model','string';...
     'n_frames','double';...
     'frame_rate','double';...
     'skel_id','string';...
-    'theia_version','string';...
     'n_segments','double';...
     'fill_level_av','double';...
     'fill_level_sd','double';...
@@ -186,10 +199,15 @@ for i_trial = 1:n_trials
             end
         end
         
+        model = default_model;
+        if prod(ismember(animation_model_segments,segment_labels))==1
+            model = animation_model;
+        end
+        
         % QTM rigid body-like structure
         qtm_skel = struct(...
             'SkeletonName',skel_name,...
-            'Solver',theia_version,...
+            'Solver',sprintf('%s-%s', theia_version, model),...
             'Scale',1,...
             'Reference','Global',...
             'NrOfSegments',n_segments,...
@@ -219,11 +237,12 @@ for i_trial = 1:n_trials
         skel_tab(row_counter,'data_folder') = trial_tab(i_trial,'data_folder');
         % skel_tab(row_counter,'trial') = trial_tab(i_trial,'trial');
         skel_tab{row_counter,'trial'} = string(trial_name);
-        
+        skel_tab(row_counter,'processing_date') = trial_tab(i_trial,'processing_date');
+        skel_tab{row_counter,'theia_version'} = string(theia_version);
+        skel_tab{row_counter,'model'} = string(model);
         skel_tab{row_counter,'n_frames'} = n_frames;
         skel_tab{row_counter,'frame_rate'} = frame_rate;
         skel_tab{row_counter,'skel_id'} = string(skel_name);
-        skel_tab{row_counter,'theia_version'} = string(theia_version);
         skel_tab{row_counter,'n_segments'} = n_segments;
         skel_tab{row_counter,'fill_level_av'} = mean(segm_fill_perc);
         skel_tab{row_counter,'fill_level_sd'} = std(segm_fill_perc);
@@ -232,17 +251,27 @@ for i_trial = 1:n_trials
         
     end
     
+    % Add Theia version info to trial tab
+    trial_tab{i_trial,'theia_version'} = string(theia_version);
+    
     % Save QTM mat file containing all skeletons
-    if ~exist(fullfile(fn,qtm_format_folder),'dir')
-        mkdir(fn,qtm_format_folder);
+    if ~admin_only
+        if ~exist(fullfile(fn,qtm_format_folder),'dir')
+            mkdir(fn,qtm_format_folder);
+        end
+        save(fullfile(fn,qtm_format_folder, [trial_name, '.mat']), 'qtm');
     end
-    save(fullfile(fn,qtm_format_folder, [trial_name, '.mat']), 'qtm');
     
 end
 
 
 %% Write skeleton tab to Excel
 
+% Update trial tab (added Theia version info)
+writetable(trial_tab,admin_file,...
+    'Sheet',trial_sheet,'WriteMode','overwritesheet');
+
+% Add/replace skeleton tab
 writetable(skel_tab(1:row_counter,:),admin_file,...
     'Sheet',skel_sheet,'WriteMode','overwritesheet');
 
