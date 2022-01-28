@@ -157,3 +157,7 @@ end
 
 writetable(meta_tab,admin_file,...
     'Sheet',meta_sheet,'WriteMode','overwritesheet');
+
+if verbose
+    disp('Done!')
+end

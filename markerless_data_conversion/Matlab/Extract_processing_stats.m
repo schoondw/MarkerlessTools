@@ -66,6 +66,10 @@ end
 % Identify trials from same session (processed at same time)
 % Correct start times and durations
 
+if verbose
+    disp('- Calculating processing times')
+end
+
 G = findgroups(meta_tab(:,{'subject_folder', 'session_folder', 'data_folder'}));
 g_vals = unique(G);
 n_grps = length(g_vals);
@@ -100,8 +104,23 @@ for i_grp=1:n_grps
     end
 end
 
+%% Calculate processing time in fps
+
+for i_trial = 1:n_rows
+    if meta_tab{i_trial,'n_skel'} < 1 || ...
+            isempty(meta_tab{i_trial,'n_videoframes'})
+        continue;
+    end
+    
+    meta_tab{i_trial,'theia_processing_fps'} = ...
+        meta_tab{i_trial,'n_videoframes'} / meta_tab{i_trial,'theia_processing_time'};
+end
+
 %% Write output table to Excel sheet
 
 writetable(meta_tab,admin_file,...
     'Sheet',meta_sheet,'WriteMode','overwritesheet');
 
+if verbose
+    disp('Done!')
+end
