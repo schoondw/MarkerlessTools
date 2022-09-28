@@ -16,3 +16,9 @@ Main script: markerless_meta_data_main_script.m
 Extraction of the video data requires ffmpeg.
 
 For detailed information, see commments in the script.
+
+## Dependencies
+Use of these tools requires:
+- [QTMTools](https://github.com/schoondw/QTMTools)
+- [Visual3D](https://c-motion.com/index.php#visual3d)
+- [ffmpeg](https://ffmpeg.org/download.html) (Optional)
