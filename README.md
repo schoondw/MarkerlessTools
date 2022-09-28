@@ -1,4 +1,4 @@
-# EnTimeMent tools
+# MarkerlessTools
 Scripts for conversion of Theia pose C3D output to QTM .mat and .tsv formats and extraction of meta data about the video data and Theia processing times.
 
 The scripts also produce an Excel file *admin.xlsx* with an overview of the processed trials and poses. The batch processing is controlled through the *trials* tab.
