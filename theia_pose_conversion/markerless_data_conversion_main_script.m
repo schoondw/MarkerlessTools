@@ -24,12 +24,13 @@ Create_project_admin;
 % This step requires Visual3D to be installed.
 
 % clearvars
-Theia_to_V3D_mat;
+% Theia_to_V3D_mat;
 
 %% Convert V3D mat files to QTM skeleton representation (QTM .mat export format)
 
 % clearvars
-V3D_mat_to_QTM_mat;
+% V3D_mat_to_QTM_mat;
+C3D_to_QTM_mat;
 
 %% Convert QTM mat to QTM TSV skeletons (QTM .tsv skeleton format)
 
