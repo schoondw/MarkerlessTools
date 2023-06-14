@@ -20,16 +20,9 @@ Create_project_admin;
 % processing. The following scripts will process the trials specified in
 % the sheet "trials".
 
-%% Extract Theia data and export to Visual3D Matlab files
-% This step requires Visual3D to be installed.
+%% Convert Theia C3D files to QTM skeleton representation (QTM .mat export format)
 
 % clearvars
-% Theia_to_V3D_mat;
-
-%% Convert V3D mat files to QTM skeleton representation (QTM .mat export format)
-
-% clearvars
-% V3D_mat_to_QTM_mat;
 C3D_to_QTM_mat;
 
 %% Convert QTM mat to QTM TSV skeletons (QTM .tsv skeleton format)
