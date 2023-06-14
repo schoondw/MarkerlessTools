@@ -1,10 +1,18 @@
 # MarkerlessTools
-Scripts for conversion of Theia pose C3D output to QTM .mat and .tsv formats and extraction of meta data about the video data and Theia processing times.
 
-The scripts also produce an Excel file *admin.xlsx* with an overview of the processed trials and poses. The batch processing is controlled through the *trials* tab.
+Scripts for batch processing of Theia3D markerless sessions collected in QTM, and conversion
+of Theia pose data to QTM-like export formats.
 
-## Data conversion
-Main script for data conversion: markerless_data_conversion_main_script.m
+## Theia batch processing (Python)
+
+Scripts for batch (re)processing a whole project or selected sessions with Theia3D software.
+
+For detailed instructions, see *py_theia_batch\Theia batch processing instructions.md*.
+
+## Theia pose conversion (Matlab)
+
+### Data conversion
+Main script for data conversion: *markerless_data_conversion_main_script.m*
 
 The first step creates a project admin file *admin.xlsx* in the project root.
 This file can be edited to select the trials that are processed in the next step.
@@ -15,14 +23,14 @@ Optionally, the third step converts the latter to QTM-like TSV export (skeleton 
 
 For detailed information, see the comments in the script.
 
-## Collection of meta data about processing
+### Collection of meta data about processing
 Main script: markerless_meta_data_main_script.m
 
 Extraction of the video data requires ffmpeg.
 
 For detailed information, see commments in the script.
 
-## Dependencies
+### Dependencies
 Use of these tools requires:
 - [QTMTools](https://github.com/schoondw/QTMTools)
-- [ffmpeg](https://ffmpeg.org/download.html) (Optional)
+- [ffmpeg](https://ffmpeg.org/download.html) (required for processing of video meta data)
