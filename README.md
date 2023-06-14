@@ -28,7 +28,7 @@ Main script: markerless_meta_data_main_script.m
 
 Extraction of the video data requires ffmpeg.
 
-For detailed information, see commments in the script.
+For detailed information, see comments in the script.
 
 ### Dependencies
 Use of these tools requires:
