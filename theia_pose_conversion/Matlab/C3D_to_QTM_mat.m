@@ -11,14 +11,12 @@ admin_file = 'admin.xlsx';
 trial_sheet = 'trials';
 skel_sheet = 'skeletons';
 
-theia_version_default = 'Theia3D 2021.2.0.1675'; % Default (used version before meta data was included in the visual3d export)
+% theia_version_default = 'Theia3D 2021.2.0.1675'; % Default (used version before meta data was included in the visual3d export)
 % theia_version_default = 'Theia3D xxxx.x.x.xxxx';
 skel_base = 'pose_filt';
 
-flds_required = {'FRAME_RATE','TIME'};
-
-% Expected Visual3D non-segment data (not critical for correct functioning)
-flds_fixed = {'FILE_NAME','FRAME_RATE','ANALOG_VIDEO_FRAME_RATIO','TIME','THEIA3D_VERSION'};
+rot_suffix = '_4X4';
+ignore_segments = {'worldbody'}; % List of rotation segments to ignore (without suffix)
 
 default_model = 'standard';
 animation_model = 'animation';
@@ -125,89 +123,49 @@ for i_trial = 1:n_trials
         end
         
         % Read skeleton file and extract info
-        % REPLACE WITH ezc3dREAD
         c3d = ezc3dRead(fullfile(fn, [skel_name, '.c3d']));
         
-        S = load(fullfile(fn, [skel_name, '.mat']));
-        flds = fieldnames(S);
-        
-%         % Check requirements
-%         if prod(isfield(S,flds_required))<1
-%             if verbose
-%                 fprintf('     Required fields (TIME or FRAME_RATE) info missing in %s.\n',...
-%                     [skel_name, '.c3d']);
-%             end
-%             continue;
-%         end
+        % Check requirements
+        if c3d.parameters.ROTATION.USED.DATA < 1 % Number of segments
+            if verbose
+                fprintf('     No rotation data found in %s.\n',...
+                    [skel_name, '.c3d']);
+            end
+            continue;
+        end
         
         % n_frames = length(S.TIME{1});
-        n_frames = c3d.parameters.TRIAL.ACTUAL_END_FIELD.DATA(1) - c3d.parameters.TRIAL.ACTUAL_START_FIELD.DATA(1) + 1;
+        n_frames = c3d.header.points.lastFrame - c3d.header.points.firstFrame + 1;
         % Possibly needs to be corrected in case of combined mocap and video data with different frame rates using ratio c3d.parameters.ROTATION.RATIO.DATA
+
         % frame_rate = S.FRAME_RATE{1};
         frame_rate = c3d.parameters.ROTATION.RATE.DATA;
         
-        theia_version = theia_version_default;
-        if isfield(c3d.parameters,'THEIA3D') % isfield(S,'THEIA3D_VERSION')
-            % theia_version = sprintf('Theia3D %d.%d.%d.%d',S.THEIA3D_VERSION{1});
-            theia_version = sprintf('Theia3D %d.%d.%d.%d',c3d.parameters.THEIA3D.THEIA3D_VERSION.DATA);
-        end
+        theia_version = sprintf('Theia3D %d.%d.%d.%d',c3d.parameters.THEIA3D.THEIA3D_VERSION.DATA);
         
         if i_skel == 1
             qtm.Frames = n_frames;
             qtm.FrameRate = frame_rate;
         end
         
-        segment_labels = setdiff(flds, flds_fixed, 'stable')'; % c3d.parameters.ROTATION.LABELS.DATA: {'worldbody_4X4', 'pelvis_4X4', etc.}
-        n_segments = length(segment_labels);
+        % Parse segment label info
+        segment_labels = strrep(c3d.parameters.ROTATION.LABELS.DATA,...
+            rot_suffix,'');
+        
+        % Segment selection
+        segm_idx = ~ismember(segment_labels,ignore_segments);
+        n_segments = sum(segm_idx);
+        segment_labels = segment_labels(segm_idx);
         
         % Convert to QTM position and rotation multidim matrix representation (rigid body)
-        pos = nan(3,n_segments,n_frames);
-        rot = nan(9,n_segments,n_frames);
+        % pos = nan(3,n_segments,n_frames);
+        % rot = nan(9,n_segments,n_frames);
+        pos = reshape(c3d.data.rotations(1:3,4,segm_idx,:),...
+            3,n_segments,n_frames);
+        rot = reshape(c3d.data.rotations(1:3,1:3,segm_idx,:),...
+            9,n_segments,n_frames);
         
-        segm_cnt = 0;
-        segm_keep = true(1,n_segments);
-        for i_segm=1:n_segments
-            lab = segment_labels{i_segm};
-            
-            % Check validity of segment data
-            if prod(size(S.(lab){1})==[n_frames 17])<1
-                segm_keep(i_segm) = false;
-                continue;
-            end
-            
-            segm_cnt = segm_cnt + 1;
-            
-            % c3d.data.rotations [4 x 4 x segm x frame], seems that
-            % position is in mm!
-            
-            % Positions in mm (c3d export is in m)
-            pos(1,segm_cnt,:) = permute(S.(lab){1}(:,4), [3 2 1])*1000;
-            pos(2,segm_cnt,:) = permute(S.(lab){1}(:,8), [3 2 1])*1000;
-            pos(3,segm_cnt,:) = permute(S.(lab){1}(:,12), [3 2 1])*1000;
-            
-            % Rotation matrix elements (mapping to QTM 6DOF rotation matrix representation)
-            rot(1,segm_cnt,:) = permute(S.(lab){1}(:,1), [3 2 1]);
-            rot(2,segm_cnt,:) = permute(S.(lab){1}(:,5), [3 2 1]);
-            rot(3,segm_cnt,:) = permute(S.(lab){1}(:,9), [3 2 1]);
-            rot(4,segm_cnt,:) = permute(S.(lab){1}(:,2), [3 2 1]);
-            rot(5,segm_cnt,:) = permute(S.(lab){1}(:,6), [3 2 1]);
-            rot(6,segm_cnt,:) = permute(S.(lab){1}(:,10), [3 2 1]);
-            rot(7,segm_cnt,:) = permute(S.(lab){1}(:,3), [3 2 1]);
-            rot(8,segm_cnt,:) = permute(S.(lab){1}(:,7), [3 2 1]);
-            rot(9,segm_cnt,:) = permute(S.(lab){1}(:,11), [3 2 1]);
-        end
-        
-        % Corrections in case of invalid segment data
-        if segm_cnt<n_segments
-            n_segments = segm_cnt;
-            segment_labels = segment_labels(segm_keep);
-            pos = pos(:,1:segm_cnt,:);
-            rot = rot(:,1:segm_cnt,:);
-            if verbose
-                disp('     Invalid segment data ignored.')
-            end
-        end
-        
+        % Infer model used
         model = default_model;
         if prod(ismember(animation_model_segments,segment_labels))==1
             model = animation_model;
@@ -244,7 +202,6 @@ for i_trial = 1:n_trials
         skel_tab(row_counter,'subject_folder') = trial_tab(i_trial,'subject_folder');
         skel_tab(row_counter,'session_folder') = trial_tab(i_trial,'session_folder');
         skel_tab(row_counter,'data_folder') = trial_tab(i_trial,'data_folder');
-        % skel_tab(row_counter,'trial') = trial_tab(i_trial,'trial');
         skel_tab{row_counter,'trial'} = string(trial_name);
         skel_tab(row_counter,'processing_date') = trial_tab(i_trial,'processing_date');
         skel_tab{row_counter,'theia_version'} = string(theia_version);
