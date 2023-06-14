@@ -33,4 +33,8 @@ For detailed information, see comments in the script.
 ### Dependencies
 Use of these tools requires:
 - [QTMTools](https://github.com/schoondw/QTMTools)
-- [ffmpeg](https://ffmpeg.org/download.html) (required for processing of video meta data)
+- [ffmpeg](https://ffmpeg.org/download.html) (only required for extraction of video meta data)
+
+### References
+The C3D parsing is done using ezc3d (version 1.5.4) compiled for Matlab running on Windows, which
+is included in this repository. For further information, see https://github.com/pyomeca/ezc3d
