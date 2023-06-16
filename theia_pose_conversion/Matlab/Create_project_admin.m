@@ -1,3 +1,4 @@
+function status = Create_project_admin(varargin)
 % Create_project_admin
 
 % - Detect Theia data folders (.\Data\<subject>\<session>\<TheiaFormatData>\<trial>)
@@ -13,104 +14,105 @@ if ~isfolder('Data')
 end
 
 %% Parameters
+status = false;
+
 % - Admin info
-admin_file = 'admin.xlsx';
-trial_sheet = 'trials';
-max_rows = 1000;
+admin_file_default = 'admin.xlsx';
+data_folder_default = 'Data';
+theia_output_folder_default = 'TheiaFormatData';
+theia_pose_base_default = 'pose_filt';
+trial_sheet_default = 'trials';
+max_rows_default = 1000;
+verbose_default = true;
 
-verbose = true;
+trialVarDef_default = {{... 'subject_folder','string';... 'session_folder','string';...
+        'data_folder','string';...
+        'trial','string';...
+        'n_skel','double';...
+        'processing_date','string'}};
 
-%% Extract subject list
-D = dir('./Data');
-subject_list = {D([D.isdir]).name};
-subject_list(1:2) = [];
+%% Parse input arguments
+p = inputParser;
+p.KeepUnmatched = true;
 
-n_subjects = length(subject_list);
+validScalarPosInt = @(x) isnumeric(x) && isscalar(x) && (x > 0) && x==floor(x);
+istext = @(x) isstring(x) || ischar(x);
+
+addParameter(p,'admin_file', admin_file_default, istext);
+addParameter(p,'data_folder', data_folder_default, istext);
+addParameter(p,'theia_output_folder', theia_output_folder_default, istext);
+addParameter(p,'theia_pose_base', theia_pose_base_default, istext);
+addParameter(p,'trial_sheet', trial_sheet_default, istext);
+addParameter(p,'max_rows', max_rows_default, validScalarPosInt);
+addParameter(p,'verbose', verbose_default, @islogical);
+addParameter(p,'trialVarDef', trialVarDef_default, @iscell);
+
+parse(p,varargin{:});
+
+Opts = p.Results;
+
+%% Identify Theia output folders (subfolders of current dir)
+C = textscan(genpath('.'),'%s','Delimiter',';');
+idx = endsWith(C{1}, Opts.theia_output_folder);
+
+if sum(idx) == 0
+    disp('No Theia output folders found on current path.')
+    return
+end
+
+datafolder_list = C{1}(idx);
+n_datafolders = length(datafolder_list);
 
 %% Initiate trial table
 
-% Output variable definitions: name and type
-% - Columns: subject_folder, session_folder, data_folder, trial, n_skel
-trialVarDef = {... 
-    'subject_folder','string';...
-    'session_folder','string';...
-    'data_folder','string';...
-    'trial','string';...
-    'n_skel','double';...
-    'processing_date','string'...
-    };
-n_vars=size(trialVarDef,1);
+n_vars=size(Opts.trialVarDef,1);
 
 % Initialize table
-trial_tab = table('Size',[max_rows n_vars],...
-    'VariableTypes',trialVarDef(:,2),'VariableNames',trialVarDef(:,1));
+trial_tab = table('Size',[Opts.max_rows n_vars],...
+    'VariableTypes',Opts.trialVarDef(:,2),'VariableNames',Opts.trialVarDef(:,1));
 
 %% Loop through folder structure
 
 row_counter = 0; % Counter for total number of trials
 
-for i_subj = 1:n_subjects
-    current_subj = subject_list{i_subj};
+for i_df = 1:n_datafolders
+    current_datafolder = datafolder_list{i_df};
     
-    % Extract session list
-    D = dir(['./Data/', current_subj]);
-    session_list = {D([D.isdir]).name};
-    session_list(1:2) = [];
+    % Identify trial folders that may contain data
+    D = dir(current_datafolder);
+    trial_list = {D([D.isdir]).name};
+    trial_list(1:2) = [];
     
-    n_sessions = length(session_list);
+    n_trials = length(trial_list);
     
-    for i_ses = 1:n_sessions
-        current_ses = session_list{i_ses};
+    for i_tr = 1:n_trials
+        current_trial = trial_list{i_tr};
         
-        % Identify subfolders that may contain trial folders
-        D = dir(['./Data/', current_subj, '/', current_ses]);
-        datafolder_list = {D([D.isdir]).name};
-        datafolder_list(1:2) = [];
+        % Count number of exported skeletons
+        D = dir(fullfile(current_datafolder, current_trial,...
+            [Opts.theia_pose_base, '_*.c3d']));
+        n_skel = length(D);
         
-        n_datafolders = length(datafolder_list);
-        
-        for i_sf = 1:n_datafolders
-            current_datafolder = datafolder_list{i_sf};
+        if n_skel > 0
+            % Write row
+            row_counter = row_counter+1;
             
-            % Identify trial folders that may contain data
-            D = dir(['./Data/', current_subj, '/', current_ses, '/', current_datafolder]);
-            trial_list = {D([D.isdir]).name};
-            trial_list(1:2) = [];
+            trial_tab{row_counter,'data_folder'} = string(current_datafolder);
+            trial_tab{row_counter,'trial'} = string(current_trial);
+            trial_tab{row_counter,'n_skel'} = n_skel;
             
-            n_trials = length(trial_list);
-            
-            for i_tr = 1:n_trials
-                current_trial = trial_list{i_tr};
-                
-                % Count number of exported skeletons
-                D = dir(['./Data/', current_subj, '/', current_ses, '/',...
-                    current_datafolder, '/', current_trial, '/pose_filt_*.c3d']);
-                n_skel = length(D);
-                
-                % Write row
-                row_counter = row_counter+1;
-                
-                trial_tab{row_counter,'subject_folder'} = string(current_subj);
-                trial_tab{row_counter,'session_folder'} = string(current_ses);
-                trial_tab{row_counter,'data_folder'} = string(current_datafolder);
-                trial_tab{row_counter,'trial'} = string(current_trial);
-                trial_tab{row_counter,'n_skel'} = n_skel;
-                
-                if n_skel > 0
-                    trial_tab{row_counter,'processing_date'} = string(D(1).date);
-                end
-            end
-            
+            trial_tab{row_counter,'processing_date'} = string(D(1).date);
         end
-        
     end
 end
-
+            
 %% Write output to Excel
 
-writetable(trial_tab(1:row_counter,:),admin_file,...
-    'Sheet',trial_sheet,'WriteMode','overwritesheet');
+writetable(trial_tab(1:row_counter,:),Opts.admin_file,...
+    'Sheet',Opts.trial_sheet,'WriteMode','overwritesheet');
 
-if verbose
-    disp('Done!')
+status = true;
+
+if Opts.verbose
+    disp('Project admin ready!')
 end
