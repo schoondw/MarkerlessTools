@@ -6,7 +6,7 @@
 % Conversion of Theia skeleton data from Theia C3D output to QTM TSV via
 % Visual3D MAT export
 % 
-% Set project root as working directory
+% Set project root as working directory 
 % Run script (recommended to run one cell at the time and clear data in between)
 
 %% Script parameters
