@@ -19,6 +19,7 @@ trial_sheet_default = 'trials';
 theia_output_folder_default = 'TheiaFormatData'; % subfolder of qtm trial path
 qtm_data_folder_rel_theia_output_folder_default = '..';
 qtm_format_output_folder_default = {'theia_data_path','qtm_format'};
+qtm_format_output_suffix_default = '_theia_pose';
 theia_pose_base_default = 'pose_filt';
 max_trials_default = 1000;
 verbose_default = true;
@@ -28,9 +29,9 @@ trialVarDef_default = {... 'subject_folder','string';... 'session_folder','strin
     'qtm_data_path','string';...
     'qtm_format_output_path','string';...    'qtm_format_output_suffix','string';...
     'trial','string';...
+    'trial_output_name','string';...
     'n_skel','double';...
     'processing_date','string'};
-
     
 % Fixed parameters
 qtm_data_folder = 'Data';
@@ -49,6 +50,7 @@ addParameter(p,'theia_output_folder', theia_output_folder_default, istext);
 addParameter(p,'qtm_data_folder_rel_theia_output_folder', ...
     qtm_data_folder_rel_theia_output_folder_default, istext);
 addParameter(p,'qtm_format_output_folder', qtm_format_output_folder_default, @iscell);
+addParameter(p,'qtm_format_output_suffix', qtm_format_output_suffix_default, istext);
 addParameter(p,'theia_pose_base', theia_pose_base_default, istext);
 addParameter(p,'max_trials', max_trials_default, validScalarPosInt);
 addParameter(p,'verbose', verbose_default, @islogical);
@@ -118,6 +120,7 @@ for i_df = 1:n_datafolders
                 string(fullfile(current_datafolder, current_trial));
             trial_tab{row_counter,'qtm_data_path'} = string(qtm_data_path);
             trial_tab{row_counter,'trial'} = string(current_trial);
+            trial_tab{row_counter,'trial_output_name'} = string([current_trial, Opts.qtm_format_output_suffix]);
             trial_tab{row_counter,'n_skel'} = n_skel;
             
             trial_tab{row_counter,'processing_date'} = string(D(1).date);

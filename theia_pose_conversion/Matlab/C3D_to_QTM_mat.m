@@ -17,7 +17,6 @@ write_skeleton_info_default = true;
 skeleton_info_sheet_default = 'skeleton_info';
 
 theia_pose_base_default = 'pose_filt';
-qtm_format_output_suffix_default = '_theia_pose';
 
 rot_suffix = '_4X4';
 ignore_segments = {'worldbody'}; % List of rotation segments to ignore (without suffix)
@@ -38,10 +37,10 @@ trialVarDef_default = {... 'subject_folder','string';... 'session_folder','strin
 
 skelVarDef_default = {... 
     'theia_version','string';...
+    'skel_id','string';...
     'model','string';...
     'n_frames','double';...
     'frame_rate','double';...
-    'skel_id','string';...
     'n_segments','double';...
     'fill_level_av','double';...
     'fill_level_sd','double';...
@@ -50,13 +49,13 @@ skelVarDef_default = {...
     };
 
 % Fixed parameters
+rmTrialVars = {'n_skel'};
 admin_only = false; % Only adds info to admin/skip writing mat file when true (for debugging)
 
 %% Parse input
 p = inputParser;
 p.KeepUnmatched = true;
 
-validScalarPosInt = @(x) isnumeric(x) && isscalar(x) && (x > 0) && x==floor(x);
 istext = @(x) isstring(x) || ischar(x);
 
 addParameter(p,'admin_file', admin_file_default, istext);
@@ -64,7 +63,6 @@ addParameter(p,'trial_sheet', trial_sheet_default, istext);
 addParameter(p,'write_skeleton_info', write_skeleton_info_default, @islogical);
 addParameter(p,'skeleton_info_sheet', skeleton_info_sheet_default, istext);
 addParameter(p,'theia_pose_base', theia_pose_base_default, istext);
-addParameter(p,'qtm_format_output_suffix', qtm_format_output_suffix_default, istext);
 addParameter(p,'default_model', default_model_default, istext);
 addParameter(p,'animation_model', animation_model_default, istext);
 addParameter(p,'animation_model_segments', animation_model_segments_default, @iscell);
@@ -92,6 +90,7 @@ if Opts.write_skeleton_info
     % Initialize table
     skel_tab = table('Size',[n_rows n_vars],...
         'VariableTypes',skelVarDef(:,2),'VariableNames',skelVarDef(:,1));
+    skel_tab = removevars(skel_tab, rmTrialVars);
 end
 
 %% Loop per trial (row in admin)
@@ -107,7 +106,7 @@ for i_trial = 1:n_trials
     end
     
     trial_name = char(trial_tab{i_trial,'trial'});
-    trial_pose_output = [trial_name, Opts.qtm_format_output_suffix];
+    trial_output_name = char(trial_tab{i_trial,'trial_output_name'});
     pn_theia = char(trial_tab{i_trial,'theia_data_path'});
     pn_output = char(trial_tab{i_trial,'qtm_format_output_path'});
     
@@ -211,13 +210,15 @@ for i_trial = 1:n_trials
             skel_tab(row_counter,'theia_data_path') = trial_tab(i_trial,'theia_data_path');
             skel_tab(row_counter,'qtm_data_path') = trial_tab(i_trial,'qtm_data_path');
             skel_tab(row_counter,'qtm_format_output_path') = trial_tab(i_trial,'qtm_format_output_path');
-            skel_tab{row_counter,'trial'} = string(trial_name);
+            skel_tab(row_counter,'trial') = trial_tab(i_trial,'trial');
+            skel_tab(row_counter,'trial_output_name') = trial_tab(i_trial,'trial_output_name');
+            % skel_tab(row_counter,'n_skel') = 1;
             skel_tab(row_counter,'processing_date') = trial_tab(i_trial,'processing_date');
             skel_tab{row_counter,'theia_version'} = string(theia_version);
+            skel_tab{row_counter,'skel_id'} = string(skel_name);
             skel_tab{row_counter,'model'} = string(model);
             skel_tab{row_counter,'n_frames'} = n_frames;
             skel_tab{row_counter,'frame_rate'} = frame_rate;
-            skel_tab{row_counter,'skel_id'} = string(skel_name);
             skel_tab{row_counter,'n_segments'} = n_segments;
             skel_tab{row_counter,'fill_level_av'} = mean(segm_fill_perc);
             skel_tab{row_counter,'fill_level_sd'} = std(segm_fill_perc);
@@ -231,7 +232,7 @@ for i_trial = 1:n_trials
         if ~exist(pn_output,'dir')
             mkdir(pn_output);
         end
-        save(fullfile(pn_output, [trial_pose_output, '.mat']), 'qtm');
+        save(fullfile(pn_output, [trial_output_name, '.mat']), 'qtm');
     end
     
 end

@@ -1,3 +1,4 @@
+function status = QTM_mat_to_tsv(varargin)
 % Convert skeletons in QTM .mat files to TSV skeleton export
 % 
 % Steps:
@@ -8,19 +9,32 @@
 %   lines with fprintf was very slow).
 
 %% Parameters
-admin_file = 'admin.xlsx';
-trial_sheet = 'trials';
-% skel_sheet = 'skeletons';
+status = false;
 
-qtm_format_folder = 'qtm_format';
+% - Admin info
+admin_file_default = 'admin.xlsx';
+trial_sheet_default = 'trials';
+qtm_format_output_suffix_default = '_theia_pose';
+verbose_default = true;
 
-verbose = true;
+%% Parse input arguments
+p = inputParser;
+p.KeepUnmatched = true;
+
+istext = @(x) isstring(x) || ischar(x);
+
+addParameter(p,'admin_file', admin_file_default, istext);
+addParameter(p,'trial_sheet', trial_sheet_default, istext);
+addParameter(p,'qtm_format_output_suffix', qtm_format_output_suffix_default, istext);
+addParameter(p,'verbose', verbose_default, @islogical);
+
+parse(p,varargin{:});
+
+Opts = p.Results;
 
 %% Read admin
-trial_tab = readtable(admin_file,'Sheet',trial_sheet);
+trial_tab = readtable(Opts.admin_file,'Sheet',Opts.trial_sheet);
 n_trials = height(trial_tab);
-
-project_path = pwd;
 
 %% Loop through trials
 
@@ -31,22 +45,16 @@ for i_trial = 1:n_trials
         continue;
     end
     
-    trial_name = char(trial_tab{i_trial,'trial'});
+    % Output file info
+    pn_output = char(trial_tab{i_trial,'qtm_format_output_path'});
+    trial_output_name = char(trial_tab{i_trial,'trial_output_name'});
     
-    % Trial path
-    fn = fullfile(project_path,'Data',...
-        char(trial_tab{i_trial,'subject_folder'}),...
-        char(trial_tab{i_trial,'session_folder'}),...
-        char(trial_tab{i_trial,'data_folder'}),...
-        char(trial_tab{i_trial,'trial'})...
-        );
-    
-    if verbose
-        fprintf('- Processing trial %d/%d: %s\n', i_trial, n_trials, fn);
+    if Opts.verbose
+        fprintf('- Processing trial %d/%d: %s\n', i_trial, n_trials, pn_output);
     end
     
-    % load(fullfile(fn,qtm_format_folder,[trial_name, '.mat'])); % Loads qtm structure
-    qtm = qtmread(fullfile(fn,qtm_format_folder,[trial_name, '.mat']));
+    % Load qtm mat structure
+    qtm = qtmread(fullfile(pn_output,[trial_output_name, '.mat']));
     
     n_frames = qtm.Frames;
     frame_rate = qtm.FrameRate;
@@ -56,12 +64,13 @@ for i_trial = 1:n_trials
         n_segments = qtm.Skeletons(i_skel).NrOfSegments;
         segment_labels = qtm.Skeletons(i_skel).SegmentLabels;
         
-        if verbose
+        if Opts.verbose
             fprintf('-- Skel: %s (%d/%d)\n', skel_name, i_skel, n_skel);
         end
         
         % Write TSV
-        tsv_file = fullfile(fn,qtm_format_folder,[trial_name, '_s_', skel_name, '.tsv']);
+        tsv_file = fullfile(pn_output,...
+            [trial_output_name, '_s_', skel_name, '.tsv']);
         fid_tsv = fopen(tsv_file,'w');
         
         % Write info header
@@ -104,6 +113,8 @@ for i_trial = 1:n_trials
     
 end
 
-if verbose
-    disp('Done!')
+status = true;
+
+if Opts.verbose
+    disp('QTM MAT to TSV conversion done!')
 end
