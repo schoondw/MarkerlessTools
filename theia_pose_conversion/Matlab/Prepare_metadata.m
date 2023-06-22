@@ -1,36 +1,15 @@
+function status = Prepare_metadata(varargin)
 % Prepare metadata
 
 %% Parameters
+status = false;
+
 % - Admin info
-admin_file = 'admin.xlsx';
-trial_sheet = 'trials';
-meta_sheet = 'trial_metadata';
+admin_file_default = 'admin.xlsx';
+trial_sheet_default = 'trials';
+meta_sheet_default = 'trial_metadata';
 
-verbose = true;
-
-%% Read admin
-trial_tab = readtable(admin_file,'Sheet',trial_sheet);
-n_rows = height(trial_tab);
-
-% project_path = pwd;
-
-%% Initiate output table
-
-% Columns (from admin): subject_folder, session_folder, data_folder, trial
-% Video data:
-% - number of cameras
-% - camera resolution (video_width, video_height, n_megapix)
-% - unequal camera resolution flag
-% - number of frames
-% - unequal number of frames flag
-
-%     'subject_folder','string';...
-%     'session_folder','string';...
-%     'data_folder','string';...
-%     'trial','string';...
-%     'n_skel','double';...
-
-metaVarDef = {... 
+metaVarDef_default = {... 
     'n_videocams','doublenan';...
     'n_videoframes','doublenan';...
     'videoframe_rate','doublenan';...
@@ -45,19 +24,48 @@ metaVarDef = {...
     'theia_processing_time','doublenan';...
     'theia_processing_fps','doublenan'...
     };
-n_vars=size(metaVarDef,1);
+
+verbose_default = true;
+
+%% Parse input arguments
+p = inputParser;
+p.KeepUnmatched = true;
+
+istext = @(x) isstring(x) || ischar(x);
+
+addParameter(p,'admin_file', admin_file_default, istext);
+addParameter(p,'trial_sheet', trial_sheet_default, istext);
+addParameter(p,'meta_sheet', meta_sheet_default, istext);
+addParameter(p,'verbose', verbose_default, @islogical);
+addParameter(p,'metaVarDef', metaVarDef_default, @iscell);
+
+parse(p,varargin{:});
+
+Opts = p.Results;
+
+
+%% Read admin
+trial_tab = readtable(Opts.admin_file,'Sheet',Opts.trial_sheet);
+n_trials = height(trial_tab);
+
+% project_path = pwd;
+
+%% Initiate output table
+n_vars=size(Opts.metaVarDef,1);
 
 % Initialize table
-meta_tab = table('Size',[n_rows n_vars],...
-    'VariableTypes',metaVarDef(:,2),'VariableNames',metaVarDef(:,1));
+meta_tab = table('Size',[n_trials n_vars],...
+    'VariableTypes',Opts.metaVarDef(:,2),'VariableNames',Opts.metaVarDef(:,1));
 
 
 %% Write output table to Excel sheet
 
-writetable([trial_tab meta_tab],admin_file,...
-    'Sheet',meta_sheet,'WriteMode','overwritesheet');
+writetable([trial_tab meta_tab],Opts.admin_file,...
+    'Sheet',Opts.meta_sheet,'WriteMode','overwritesheet');
 
-if verbose
-    disp('Done!')
+status = true;
+
+if Opts.verbose
+    disp('Meta data sheet added to admin file.')
 end
 

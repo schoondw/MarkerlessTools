@@ -1,3 +1,4 @@
+function status = Extract_video_info(varargin)
 % Extract video meta data
 %
 % Extract video meta data from json file created by batch executable
@@ -19,11 +20,15 @@
 
 
 %% Parameters
-% - Admin info
-admin_file = 'admin.xlsx';
-% trial_sheet = 'trials';
-meta_sheet = 'trial_metadata';
+status = false;
 
+% - Admin info
+admin_file_default = 'admin.xlsx';
+meta_sheet_default = 'trial_metadata';
+
+verbose_default = true;
+
+% Fixed parameters
 json_tempfile = 'miqusvideoinfo_json.txt';
 json_file = 'miqusvideoinfo.json';
 
@@ -35,7 +40,25 @@ repl = [93 125 13 10]; % char codes
 % ]}
 % 
 
-verbose = true;
+%% Parse input arguments
+p = inputParser;
+p.KeepUnmatched = true;
+
+istext = @(x) isstring(x) || ischar(x);
+
+addParameter(p,'admin_file', admin_file_default, istext);
+addParameter(p,'meta_sheet', meta_sheet_default, istext);
+addParameter(p,'verbose', verbose_default, @islogical);
+
+parse(p,varargin{:});
+
+Opts = p.Results;
+
+%% Check
+if ~exist(json_tempfile,'file') && ~exist(json_file,'file')
+    disp('Video meta data not found. Run extractmiqusvideoinfo_json.bat in the current folder and try again.')
+    return
+end
 
 %% Prepare json file from batch file output
 % Need to replace final empty element (alternatively, skip last element
@@ -78,31 +101,37 @@ for i1=1:N_mv
 end
 
 %% Read admin
-meta_tab = readtable(admin_file,'Sheet',meta_sheet);
-n_rows = height(meta_tab);
+meta_tab = readtable(Opts.admin_file,'Sheet',Opts.meta_sheet);
+n_trials = height(meta_tab);
 
-project_path = pwd;
-
-% Project name
-i_filesep = strfind(project_path,filesep);
-project_name = project_path(i_filesep(end)+1:end);
+% project_path = pwd;
+% 
+% % Project name
+% i_filesep = strfind(project_path,filesep);
+% project_name = project_path(i_filesep(end)+1:end);
 
 %% Loop per trial
 
-for i_trial = 1:n_rows
-    % Trial ID
-    trial_id = fullfile(project_name,'Data',...
-        char(meta_tab{i_trial,'subject_folder'}),...
-        char(meta_tab{i_trial,'session_folder'}),...
+for i_trial = 1:n_trials
+    % Trial pattern
+%     trial_pat = fullfile(project_name,'Data',...
+%         char(meta_tab{i_trial,'subject_folder'}),...
+%         char(meta_tab{i_trial,'session_folder'}),...
+%         char(meta_tab{i_trial,'trial'})...
+%         );
+    trial_pat = fullfile(...
+        char(meta_tab{i_trial,'qtm_data_path'}),...
         char(meta_tab{i_trial,'trial'})...
         );
     
-    if verbose
-        fprintf('- Processing trial %d/%d: %s\n', i_trial, n_rows, trial_id);
+    if Opts.verbose
+        fprintf('- Processing trial %d/%d: %s\n', i_trial, n_trials, trial_pat);
     end
     
     % Find videos corresponding to current trial
-    vid_idx = contains(mv_files,[trial_id, '_Miqus']);
+    % - DEVEL: Need to strip/apply folder strings .\ and ..\ for this to
+    %   work
+    vid_idx = contains(mv_files,[trial_pat, '_Miqus']);
     
     % Process video info
     flag_nf = false; % Initiate flags
@@ -111,6 +140,9 @@ for i_trial = 1:n_rows
     
     n_cams = sum(vid_idx);
     if n_cams < 1
+        if Opts.verbose
+            disp('  - No video files found.')
+        end
         continue;
     end
     
@@ -155,9 +187,11 @@ end
 
 %% Write output table to Excel sheet
 
-writetable(meta_tab,admin_file,...
-    'Sheet',meta_sheet,'WriteMode','overwritesheet');
+writetable(meta_tab,Opts.admin_file,...
+    'Sheet',Opts.meta_sheet,'WriteMode','overwritesheet');
 
-if verbose
-    disp('Done!')
+status = true;
+
+if Opts.verbose
+    disp('Extraction of video data done.')
 end
