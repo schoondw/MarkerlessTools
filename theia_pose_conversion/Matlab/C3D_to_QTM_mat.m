@@ -16,6 +16,8 @@ trial_sheet_default = 'trials';
 write_skeleton_info_default = true;
 skeleton_info_sheet_default = 'skeleton_info';
 
+add_theia_version_to_trial_sheet_default = true;
+
 theia_pose_base_default = 'pose_filt';
 
 rot_suffix = '_4X4';
@@ -61,6 +63,7 @@ istext = @(x) isstring(x) || ischar(x);
 addParameter(p,'admin_file', admin_file_default, istext);
 addParameter(p,'trial_sheet', trial_sheet_default, istext);
 addParameter(p,'write_skeleton_info', write_skeleton_info_default, @islogical);
+addParameter(p,'add_theia_version_to_trial_sheet', add_theia_version_to_trial_sheet_default, @islogical);
 addParameter(p,'skeleton_info_sheet', skeleton_info_sheet_default, istext);
 addParameter(p,'theia_pose_base', theia_pose_base_default, istext);
 addParameter(p,'default_model', default_model_default, istext);
@@ -77,6 +80,10 @@ Opts = p.Results;
 %% Read admin
 trial_tab = readtable(Opts.admin_file, 'Sheet', Opts.trial_sheet);
 n_trials = height(trial_tab);
+
+if Opts.add_theia_version_to_trial_sheet
+    trial_tab = addvars(trial_tab,repmat("",n_trials,1),'NewVariableNames','theia_version');
+end
 
 %% Initiate skeleton table
 
@@ -155,6 +162,10 @@ for i_trial = 1:n_trials
         if i_skel == 1
             qtm.Frames = n_frames;
             qtm.FrameRate = frame_rate;
+            
+            if Opts.add_theia_version_to_trial_sheet
+                trial_tab{i_trial,'theia_version'} = string(theia_version);
+            end
         end
         
         % Parse segment label info
@@ -239,6 +250,12 @@ end
 
 
 %% Write skeleton tab to Excel
+
+% Rewrite trial_tab
+if Opts.add_theia_version_to_trial_sheet
+    writetable(trial_tab, Opts.admin_file,...
+        'Sheet',Opts.trial_sheet, 'WriteMode','overwritesheet');
+end
 
 % Add/replace skeleton tab
 if Opts.write_skeleton_info
