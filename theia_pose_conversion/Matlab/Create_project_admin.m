@@ -76,7 +76,7 @@ if sum(idx) == 0
     return
 end
 
-theia_datafolder_list = C{1}(idx);
+theia_datafolder_list = strrep(C{1}(idx),['.', filesep],''); % Remove prefix .\ from genpath output
 n_datafolders = length(theia_datafolder_list);
 
 %% Initiate trial table
@@ -94,7 +94,9 @@ row_counter = 0; % Counter for total number of trials
 for i_df = 1:n_datafolders
     current_datafolder = theia_datafolder_list{i_df};
     
-    qtm_data_path = fullfile(current_datafolder, ...
+    % qtm_data_path = fullfile(current_datafolder, ...
+    %     Opts.qtm_data_folder_rel_theia_output_folder);
+    qtm_data_path = resolve_path(current_datafolder, ...
         Opts.qtm_data_folder_rel_theia_output_folder);
     
     % Identify trial folders that may contain data
@@ -127,7 +129,8 @@ for i_df = 1:n_datafolders
             
             % Define and add QTM format output dir
             base_folder = trial_tab{row_counter, Opts.qtm_format_output_folder{1}}; % qtm_/theia_data_path
-            qtm_format_output_path = fullfile(base_folder, Opts.qtm_format_output_folder{2});
+            % qtm_format_output_path = fullfile(base_folder, Opts.qtm_format_output_folder{2});
+            qtm_format_output_path = resolve_path(base_folder, Opts.qtm_format_output_folder{2});
             trial_tab{row_counter,'qtm_format_output_path'} = string(qtm_format_output_path);
             % trial_tab{row_counter,'qtm_format_output_suffix'} = string(Opts.qtm_format_output_suffix);
         end
