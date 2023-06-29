@@ -33,6 +33,7 @@ For detailed information, see comments in the script.
 ### Dependencies
 Use of these tools requires:
 - [QTMTools](https://github.com/schoondw/QTMTools)
+- [Statistics and Machine Learning Toolbox](https://mathworks.com/products/statistics.html) (only required for extraction of video meta data)
 - [ffmpeg](https://ffmpeg.org/download.html) (only required for extraction of video meta data)
 
 ### References
