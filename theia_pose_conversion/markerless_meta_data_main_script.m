@@ -36,8 +36,6 @@ Opts = struct(...
     'theia_processing_fps','doublenan'}}...
 );    
 
-
-
 %% Create new project admin file
 % Only perform this step when no project admin has been created yet.
 % This step will overwrite the "trials" tab in "admin.xlsx" if it already
@@ -55,6 +53,11 @@ Prepare_metadata(Opts);
 %% Video meta data
 % Extract video meta data from json file created with help of ffmpeg (see
 % info in script)
+if ~exist(fullfile(pwd,'extractmiqusvideoinfo_json.bat'),'file')
+    fn_bat = which('extractmiqusvideoinfo_json.bat');
+    copyfile(fn_bat);
+end
+system('extractmiqusvideoinfo_json.bat')
 
 Extract_video_info(Opts);
 
